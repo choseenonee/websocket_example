@@ -3,6 +3,7 @@ package ws
 import (
 	"github.com/gorilla/websocket"
 	"net/http"
+	"sync"
 	"websockets/pkg/log"
 )
 
@@ -14,6 +15,7 @@ func InitHubScheduler(logger *log.Logs) *HubScheduler {
 }
 
 type HubScheduler struct {
+	sync.RWMutex
 	logger *log.Logs
 	rooms  *map[string][]*websocket.Conn
 }
@@ -24,6 +26,9 @@ var upgrader = websocket.Upgrader{
 }
 
 func (h *HubScheduler) sendRoomMessages(msgType int, msgBytes []byte, roomName string, senderConn *websocket.Conn) {
+	h.RLock()
+	defer h.RUnlock()
+
 	for _, conn := range (*h.rooms)[roomName] {
 		if conn == senderConn {
 			continue
@@ -48,6 +53,9 @@ func (h *HubScheduler) listenRoomConnection(roomName string, conn *websocket.Con
 }
 
 func (h *HubScheduler) CreateRoom(roomName string, w http.ResponseWriter, r *http.Request) error {
+	h.Lock()
+	defer h.Unlock()
+
 	if (*h.rooms)[roomName] != nil {
 		return RoomAlreadyExists
 	}
@@ -66,6 +74,9 @@ func (h *HubScheduler) CreateRoom(roomName string, w http.ResponseWriter, r *htt
 }
 
 func (h *HubScheduler) JoinRoom(roomName string, w http.ResponseWriter, r *http.Request) error {
+	h.Lock()
+	defer h.Unlock()
+
 	if (*h.rooms)[roomName] == nil {
 		return RoomNotFound
 	}
