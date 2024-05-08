@@ -51,7 +51,7 @@ func (h *HubHandler) JoinRoom(c *gin.Context) {
 }
 
 func (h *HubHandler) LeaveRoom(c *gin.Context) {
-	// TODO: implement me
+	// TODO: implement me, just call the removeGarbageConn func
 }
 
 func (h *HubHandler) GetRooms(c *gin.Context) {
