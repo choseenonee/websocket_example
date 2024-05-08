@@ -1,2 +1,0 @@
-{"level":"error","time":"2024-05-08T21:50:49Z","caller":"/Users/thechosenone/GolandProjects/websockets/pkg/log/logs.go:20","message":"websocket: the client is not using the websocket protocol: 'upgrade' token not found in 'Connection' header"}
-{"level":"error","time":"2024-05-08T22:00:51Z","caller":"/Users/thechosenone/GolandProjects/websockets/pkg/log/logs.go:20","message":"websocket: close 1000 (normal)"}
