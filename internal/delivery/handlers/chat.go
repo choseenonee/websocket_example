@@ -23,9 +23,9 @@ func (ch *ChatHandler) CreateChat(c *gin.Context) {
 
 	chatID, err := ch.chatRepository.Create(c.Request.Context(), models.ChatCreate{Name: chatName})
 	if err != nil {
-		// TODO: test unique error
 		if strings.Contains(err.Error(), "unique") {
 			c.JSON(http.StatusBadRequest, gin.H{"err": "chat with given name already exists"})
+			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
 		return

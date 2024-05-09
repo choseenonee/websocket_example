@@ -14,7 +14,6 @@ type ChatRepo interface {
 	CreateMessage(ctx context.Context, message models.MessageCreate) (int, error)
 }
 
-// TODO: если еррор то насрём в соединение ошибкой и закроем его ВООООО
 type ChatGetterRepo interface {
 	IsChatExists(chatID int) (bool, error)
 }
