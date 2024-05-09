@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"net/http"
 	"sync"
@@ -10,14 +11,14 @@ import (
 func InitHubScheduler(logger *log.Logs) *HubScheduler {
 	return &HubScheduler{
 		logger: logger,
-		rooms:  &map[string][]*websocket.Conn{},
+		rooms:  &map[string]map[string]*websocket.Conn{},
 	}
 }
 
 type HubScheduler struct {
 	sync.RWMutex
 	logger *log.Logs
-	rooms  *map[string][]*websocket.Conn
+	rooms  *map[string]map[string]*websocket.Conn
 }
 
 var upgrader = websocket.Upgrader{
@@ -29,12 +30,13 @@ func (h *HubScheduler) sendRoomMessages(msgType int, msgBytes []byte, roomName s
 	h.RLock()
 	defer h.RUnlock()
 
-	for _, conn := range (*h.rooms)[roomName] {
+	for clientUUID, conn := range (*h.rooms)[roomName] {
 		if conn == senderConn {
 			continue
 		}
 		err := conn.WriteMessage(msgType, msgBytes)
 		if err != nil {
+			delete((*h.rooms)[roomName], clientUUID)
 			h.logger.Error(err.Error())
 		}
 	}
@@ -66,7 +68,9 @@ func (h *HubScheduler) CreateRoom(roomName string, w http.ResponseWriter, r *htt
 		return err
 	}
 
-	(*h.rooms)[roomName] = []*websocket.Conn{conn}
+	clientUUID := uuid.New()
+
+	(*h.rooms)[roomName] = map[string]*websocket.Conn{clientUUID.String(): conn}
 
 	go h.listenRoomConnection(roomName, conn)
 
@@ -87,7 +91,9 @@ func (h *HubScheduler) JoinRoom(roomName string, w http.ResponseWriter, r *http.
 		return err
 	}
 
-	(*h.rooms)[roomName] = append((*h.rooms)[roomName], conn)
+	clientUUID := uuid.New()
+
+	(*h.rooms)[roomName][clientUUID.String()] = conn
 
 	go h.listenRoomConnection(roomName, conn)
 
