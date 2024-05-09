@@ -1,4 +1,4 @@
-package ws
+package scheduler
 
 type Error string
 

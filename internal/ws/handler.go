@@ -4,9 +4,11 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strconv"
+	"websockets/internal/ws/scheduler"
 )
 
-func InitHubHandler(scheduler *HubScheduler) *HubHandler {
+func InitHubHandler(scheduler *scheduler.HubScheduler) *HubHandler {
 	if scheduler == nil {
 		panic("cant be nil scheduler")
 	}
@@ -17,43 +19,24 @@ func InitHubHandler(scheduler *HubScheduler) *HubHandler {
 }
 
 type HubHandler struct {
-	scheduler *HubScheduler
+	scheduler *scheduler.HubScheduler
 }
 
-func (h *HubHandler) CreateRoom(c *gin.Context) {
-	roomName := c.Query("name")
-	err := h.scheduler.CreateRoom(roomName, c.Writer, c.Request)
+func (h *HubHandler) JoinChat(c *gin.Context) {
+	chatIDRaw := c.Query("id")
+
+	chatID, err := strconv.Atoi(chatIDRaw)
 	if err != nil {
-		if errors.Is(err, RoomAlreadyExists) {
-			c.JSON(http.StatusBadRequest, RoomAlreadyExists)
+		c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
+	}
+
+	err = h.scheduler.JoinChat(chatID, c.Writer, c.Request)
+	if err != nil {
+		if errors.Is(err, scheduler.RoomNotFound) {
+			c.JSON(http.StatusBadRequest, scheduler.RoomNotFound)
 			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
 		return
 	}
-
-	return
-}
-
-func (h *HubHandler) JoinRoom(c *gin.Context) {
-	roomName := c.Query("name")
-	err := h.scheduler.JoinRoom(roomName, c.Writer, c.Request)
-	if err != nil {
-		if errors.Is(err, RoomNotFound) {
-			c.JSON(http.StatusBadRequest, RoomNotFound)
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
-		return
-	}
-
-	return
-}
-
-func (h *HubHandler) LeaveRoom(c *gin.Context) {
-	// TODO: implement me, just call the removeGarbageConn func
-}
-
-func (h *HubHandler) GetRooms(c *gin.Context) {
-	// TODO: implement me
 }

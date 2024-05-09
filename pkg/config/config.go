@@ -14,6 +14,7 @@ const (
 	DBPort               = "DB_PORT"
 	DBHost               = "DB_HOST"
 	PaginationPageLength = "PAGINATION_PAGE_LENGTH"
+	DBTimeout            = "DB_TIMEOUT"
 )
 
 func InitConfig() {

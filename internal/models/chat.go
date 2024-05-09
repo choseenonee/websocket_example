@@ -22,3 +22,12 @@ type Message struct {
 	MessageCreate
 	ID int `json:"id"`
 }
+
+func InitMessageCreate(sender, content string, timestamp time.Time, chatID int) *MessageCreate {
+	return &MessageCreate{
+		Sender:        sender,
+		Content:       content,
+		SendTimeStamp: timestamp,
+		ChatID:        chatID,
+	}
+}

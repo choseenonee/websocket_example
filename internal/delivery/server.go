@@ -3,20 +3,16 @@ package delivery
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"websockets/internal/ws"
+	"github.com/jmoiron/sqlx"
+	"websockets/internal/delivery/routers"
 	"websockets/pkg/log"
 )
 
-func Start(logger *log.Logs) {
+func Start(logger *log.Logs, db *sqlx.DB) {
 	r := gin.Default()
-
-	wsRouter := r.Group("/ws")
-
-	hubScheduler := ws.InitHubScheduler(logger)
-	hubHandler := ws.InitHubHandler(hubScheduler)
-
-	wsRouter.GET("/create_room", hubHandler.CreateRoom)
-	wsRouter.GET("/join_room", hubHandler.JoinRoom)
+	
+	routers.RegisterChatRouter(r, db)
+	routers.RegisterWebSocketRouter(r, db, logger)
 
 	if err := r.Run("0.0.0.0:3002"); err != nil {
 		panic(fmt.Sprintf("error running client: %v", err.Error()))

@@ -68,18 +68,14 @@ func (c chatRepo) Create(ctx context.Context, chatCreate models.ChatCreate) (int
 
 	query := `INSERT INTO chats (name) VALUES ($1) RETURNING id;`
 
-	res, err := tx.ExecContext(ctx, query, chatCreate.Name)
-	if err != nil {
-		if rbErr := tx.Rollback(); rbErr != nil {
-			return 0, fmt.Errorf("err: %v, also rbErr: %v", err, rbErr)
-		}
-		return 0, err
-	}
+	row := tx.QueryRowContext(ctx, query, chatCreate.Name)
 
-	chatID, err := res.LastInsertId()
+	var chatID int
+	err = row.Scan(&chatID)
 	if err != nil {
-		if rbErr := tx.Rollback(); rbErr != nil {
-			return 0, err
+		rbErr := tx.Rollback()
+		if rbErr != nil {
+			return 0, fmt.Errorf("err: %v, rbErr: %v", err.Error(), rbErr.Error())
 		}
 		return 0, err
 	}
@@ -88,11 +84,11 @@ func (c chatRepo) Create(ctx context.Context, chatCreate models.ChatCreate) (int
 		return 0, err
 	}
 
-	return int(chatID), nil
+	return chatID, nil
 }
 
 func (c chatRepo) GetChatMessagesByPage(ctx context.Context, chatID, page int) ([]models.Message, error) {
-	query := `SELECT id, sender, content, send_timestamp FROM messages WHERE messages.chat_id = $1 OFFSET $2 LIMIT $3`
+	query := `SELECT id, sender, content, send_timestamp FROM messages WHERE messages.chat_id = $1 ORDER BY send_timestamp DESC OFFSET $2 LIMIT $3`
 
 	paginationPageLength := viper.GetInt(config.PaginationPageLength)
 
@@ -128,4 +124,47 @@ func (c chatRepo) GetChatsByPage(ctx context.Context, page int) ([]models.Chat, 
 	}
 
 	return c.parseChats(rows)
+}
+
+func (c chatRepo) CreateMessage(ctx context.Context, messageCreate models.MessageCreate) (int, error) {
+	tx, err := c.db.Beginx()
+	if err != nil {
+		return 0, err
+	}
+
+	query := `INSERT INTO messages (sender, content, send_timestamp, chat_id) VALUES ($1, $2, $3, $4) RETURNING id;`
+
+	row := tx.QueryRowContext(ctx, query, messageCreate.Sender, messageCreate.Content, messageCreate.SendTimeStamp,
+		messageCreate.ChatID)
+
+	var messageID int
+	err = row.Scan(&messageID)
+	if err != nil {
+		rbErr := tx.Rollback()
+		if rbErr != nil {
+			return 0, fmt.Errorf("err: %v, rbErr: %v", err.Error(), rbErr.Error())
+		}
+		return 0, err
+	}
+
+	if err = tx.Commit(); err != nil {
+		return 0, err
+	}
+
+	return messageID, nil
+}
+
+func (c chatRepo) GetChatByID(ctx context.Context, chatID int) (models.Chat, error) {
+	query := `SELECT name FROM chats WHERE id = $1`
+
+	row := c.db.QueryRowContext(ctx, query, chatID)
+
+	var chat models.Chat
+	chat.ID = chatID
+	err := row.Scan(&chat.Name)
+	if err != nil {
+		return models.Chat{}, err
+	}
+
+	return chat, nil
 }
