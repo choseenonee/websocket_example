@@ -1,7 +1,7 @@
 package main
 
 import (
-	"websockets/internal"
+	"websockets/internal/delivery"
 	"websockets/pkg/log"
 )
 
@@ -12,5 +12,5 @@ func main() {
 
 	defer infoFile.Close()
 
-	internal.Start(logger)
+	delivery.Start(logger)
 }

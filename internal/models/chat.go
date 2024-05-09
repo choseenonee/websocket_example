@@ -1,0 +1,24 @@
+package models
+
+import "time"
+
+type ChatCreate struct {
+	Name string `json:"name"`
+}
+
+type Chat struct {
+	ChatCreate
+	ID int `json:"id"`
+}
+
+type MessageCreate struct {
+	Sender        string    `json:"sender"`
+	Content       string    `json:"content"`
+	SendTimeStamp time.Time `json:"timestamp"`
+	ChatID        int       `json:"chat_id"`
+}
+
+type Message struct {
+	MessageCreate
+	ID int `json:"id"`
+}
