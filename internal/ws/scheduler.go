@@ -36,7 +36,9 @@ func (h *HubScheduler) sendRoomMessages(msgType int, msgBytes []byte, roomName s
 		}
 		err := conn.WriteMessage(msgType, msgBytes)
 		if err != nil {
+			h.Lock()
 			delete((*h.rooms)[roomName], clientUUID)
+			h.Unlock()
 			h.logger.Error(err.Error())
 		}
 	}
