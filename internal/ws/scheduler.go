@@ -26,6 +26,12 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 }
 
+func (h *HubScheduler) removeClient(roomName, clientUUID string) {
+	h.Lock()
+	defer h.Unlock()
+	delete((*h.rooms)[roomName], clientUUID)
+}
+
 func (h *HubScheduler) sendRoomMessages(msgType int, msgBytes []byte, roomName string, senderConn *websocket.Conn) {
 	h.RLock()
 	defer h.RUnlock()
@@ -36,18 +42,17 @@ func (h *HubScheduler) sendRoomMessages(msgType int, msgBytes []byte, roomName s
 		}
 		err := conn.WriteMessage(msgType, msgBytes)
 		if err != nil {
-			h.Lock()
-			delete((*h.rooms)[roomName], clientUUID)
-			h.Unlock()
+			h.removeClient(roomName, clientUUID)
 			h.logger.Error(err.Error())
 		}
 	}
 }
 
-func (h *HubScheduler) listenRoomConnection(roomName string, conn *websocket.Conn) {
+func (h *HubScheduler) listenRoomConnection(roomName, clientUUID string, conn *websocket.Conn) {
 	for {
 		msgType, msgBytes, err := conn.ReadMessage()
 		if err != nil {
+			h.removeClient(roomName, clientUUID)
 			h.logger.Error(err.Error())
 			return
 		}
@@ -70,11 +75,11 @@ func (h *HubScheduler) CreateRoom(roomName string, w http.ResponseWriter, r *htt
 		return err
 	}
 
-	clientUUID := uuid.New()
+	clientUUID := uuid.New().String()
 
-	(*h.rooms)[roomName] = map[string]*websocket.Conn{clientUUID.String(): conn}
+	(*h.rooms)[roomName] = map[string]*websocket.Conn{clientUUID: conn}
 
-	go h.listenRoomConnection(roomName, conn)
+	go h.listenRoomConnection(roomName, clientUUID, conn)
 
 	return nil
 }
@@ -93,11 +98,11 @@ func (h *HubScheduler) JoinRoom(roomName string, w http.ResponseWriter, r *http.
 		return err
 	}
 
-	clientUUID := uuid.New()
+	clientUUID := uuid.New().String()
 
-	(*h.rooms)[roomName][clientUUID.String()] = conn
+	(*h.rooms)[roomName][clientUUID] = conn
 
-	go h.listenRoomConnection(roomName, conn)
+	go h.listenRoomConnection(roomName, clientUUID, conn)
 
 	return nil
 }

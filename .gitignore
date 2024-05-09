@@ -25,3 +25,6 @@ go.work
 
 # log files
 *.log
+
+# compiled file
+wsapp
