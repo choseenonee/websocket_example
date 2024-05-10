@@ -47,19 +47,24 @@ func (h *HubScheduler) sendRoomMessages(msgType int, msgBytes []byte, chatID int
 	h.RLock()
 	defer h.RUnlock()
 
-	for clientUUID, conn := range (*h.chats)[chatID] {
+	for _, conn := range (*h.chats)[chatID] {
 		if conn == senderConn {
 			continue
 		}
 		err := conn.WriteMessage(msgType, msgBytes)
 		if err != nil {
-			h.removeClient(chatID, clientUUID)
+			//h.removeClient(chatID, clientUUID)
+			//cnErr := conn.Close()
+			//if cnErr != nil {
+			//	h.logger.Error(cnErr.Error())
+			//}
 			h.logger.Error(err.Error())
 		}
 	}
 }
 
 func (h *HubScheduler) listenRoomConnection(chatID int, clientUUID string, conn *websocket.Conn) {
+	defer conn.Close()
 	for {
 		msgType, msgBytes, err := conn.ReadMessage()
 		if err != nil {

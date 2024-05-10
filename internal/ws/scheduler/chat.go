@@ -21,10 +21,11 @@ type ChatRepoScheduler struct {
 	logger   *log.Logs
 }
 
-func InitChatRepoScheduler(chatRepo repository.ChatRepo) RepoMessageCreator {
+func InitChatRepoScheduler(chatRepo repository.ChatRepo, logger *log.Logs) RepoMessageCreator {
 	chatRepoScheduler := ChatRepoScheduler{
 		messages: make(chan models.MessageCreate, 100),
 		chatRepo: chatRepo,
+		logger:   logger,
 	}
 
 	go chatRepoScheduler.run()
