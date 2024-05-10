@@ -54,6 +54,10 @@ func (h *HubScheduler) sendRoomMessages(msgType int, msgBytes []byte, chatID int
 		err := conn.WriteMessage(msgType, msgBytes)
 		if err != nil {
 			h.removeClient(chatID, clientUUID)
+			cnErr := conn.Close()
+			if cnErr != nil {
+				h.logger.Error(cnErr.Error())
+			}
 			h.logger.Error(err.Error())
 		}
 	}
@@ -64,6 +68,10 @@ func (h *HubScheduler) listenRoomConnection(chatID int, clientUUID string, conn 
 		msgType, msgBytes, err := conn.ReadMessage()
 		if err != nil {
 			h.removeClient(chatID, clientUUID)
+			cnErr := conn.Close()
+			if cnErr != nil {
+				h.logger.Error(cnErr.Error())
+			}
 			h.logger.Error(err.Error())
 			return
 		}

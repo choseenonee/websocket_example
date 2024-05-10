@@ -13,7 +13,7 @@ func RegisterWebSocketRouter(r *gin.Engine, db *sqlx.DB, logger *log.Logs) *gin.
 	wsRouter := r.Group("/ws")
 
 	chatRepo := repository.InitChatRepo(db)
-	chatScheduler := scheduler.InitChatRepoScheduler(chatRepo)
+	chatScheduler := scheduler.InitChatRepoScheduler(chatRepo, logger)
 	chatGetterRepo := repository.InitChatGetterRepo(chatRepo)
 	hubScheduler := scheduler.InitHubScheduler(logger, chatScheduler, chatGetterRepo)
 	hubHandler := ws.InitHubHandler(hubScheduler)

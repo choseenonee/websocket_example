@@ -1,6 +1,7 @@
 package benchmark
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
@@ -14,9 +15,10 @@ import (
 )
 
 const (
-	chatsAmount       = 5
-	chatClientsAmount = 15 // will panic if less than 2
-	serverUrl         = "95.84.137.217:3002"
+	chatsAmount       = 20
+	chatClientsAmount = 20 // will panic if less than 2
+	//serverUrl         = "95.84.137.217:3002"
+	serverUrl = "0.0.0.0:3002"
 )
 
 type createChatResponse struct {
@@ -67,7 +69,9 @@ func createChatClients(chatID int, output chan time.Time) {
 		wg.Add(1)
 
 		go func() {
-			c, _, err := websocket.DefaultDialer.Dial(url, nil)
+			ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*2000)
+			defer cancel()
+			c, _, err := websocket.DefaultDialer.DialContext(ctx, url, nil)
 			if err != nil {
 				log.Fatalf("dial: %v", err.Error())
 			}
@@ -110,7 +114,7 @@ func sendMessage(chatID int, message string) time.Time {
 	return time.Now()
 }
 
-func TestPlaceRepo_GetAllWithFilter(t *testing.T) {
+func TestMessageLatency(t *testing.T) {
 	chatsChannels := make(map[int]chan time.Time)
 	for i := 0; i < chatsAmount; i++ {
 		chatID := createChat()
@@ -158,5 +162,5 @@ func TestPlaceRepo_GetAllWithFilter(t *testing.T) {
 
 	wg.Wait()
 
-	fmt.Println("done")
+	fmt.Println("Done!")
 }
