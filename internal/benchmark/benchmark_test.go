@@ -17,7 +17,7 @@ import (
 const (
 	chatsAmount       = 20
 	chatClientsAmount = 20 // will panic if less than 2
-	//serverUrl         = "95.84.137.217:3002"
+	//serverUrl         = "url:3002"
 	serverUrl = "0.0.0.0:3002"
 )
 
