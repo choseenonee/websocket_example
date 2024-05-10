@@ -23,7 +23,7 @@ type ChatRepoScheduler struct {
 
 func InitChatRepoScheduler(chatRepo repository.ChatRepo) RepoMessageCreator {
 	chatRepoScheduler := ChatRepoScheduler{
-		messages: make(chan models.MessageCreate),
+		messages: make(chan models.MessageCreate, 100),
 		chatRepo: chatRepo,
 	}
 
