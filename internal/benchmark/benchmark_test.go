@@ -65,6 +65,7 @@ func createChatClients(chatID int, output chan time.Time) {
 
 	for i := 0; i < chatClientsAmount; i++ {
 		wg.Add(1)
+
 		go func() {
 			c, _, err := websocket.DefaultDialer.Dial(url, nil)
 			if err != nil {
@@ -82,10 +83,6 @@ func createChatClients(chatID int, output chan time.Time) {
 				}
 				if mt == 1 || mt == 2 {
 					output <- time.Now()
-					// TODO: doesnt work dont know why
-					//if len(output) == chatClientsAmount {
-					//	close(output)
-					//}
 				} else {
 					log.Fatalf("unexpected message type: %v, message: %v", mt, m)
 				}
@@ -136,27 +133,24 @@ func TestPlaceRepo_GetAllWithFilter(t *testing.T) {
 			<-startSyncChan
 			timeStamp := sendMessage(key, "hello, world!")
 
-			time.Sleep(3 * time.Second)
-
 			var meanDuration time.Duration
 			var minTime = time.Hour
 			var maxTime = time.Nanosecond
-			count := 0
-			timeStampChan := chatsChannels[key]
-			for {
-				if len(timeStampChan) == 0 {
-					break
-				}
-				elem := <-timeStampChan
-				count++
+
+			var count = 0
+			for elem := range chatsChannels[key] {
 				duration := elem.Sub(timeStamp)
 				meanDuration += duration
 				minTime = min(minTime, duration)
 				maxTime = max(maxTime, duration)
+				count++
+				if count == chatClientsAmount {
+					break
+				}
 			}
 
-			mean := int(meanDuration.Milliseconds()) / count
-			fmt.Println(fmt.Sprintf("chatID: %v, mean time: %v milliseconds, max time: %v, min time: %v, count: %v", key, mean, maxTime, minTime, count))
+			mean := int(meanDuration.Milliseconds()) / chatClientsAmount
+			fmt.Println(fmt.Sprintf("chatID: %v, mean time: %v milliseconds, max time: %v, min time: %v, chatClients: %v", key, mean, maxTime, minTime, chatClientsAmount))
 		}()
 	}
 
