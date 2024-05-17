@@ -17,8 +17,10 @@ import (
 const (
 	chatsAmount       = 20
 	chatClientsAmount = 20 // will panic if less than 2
-	//serverUrl         = "url:3002"
-	serverUrl = "0.0.0.0:3002"
+	serverUrl         = "95.84.137.217:3002"
+	//serverUrl = "0.0.0.0:3002"
+	messagesPerMinute    = 120 // in a minute :))))
+	messagesSendDeadLine = 1   // minutes
 )
 
 type createChatResponse struct {
@@ -98,20 +100,15 @@ func createChatClients(chatID int, output chan time.Time) {
 }
 
 func sendMessage(chatID int, message string) time.Time {
-	url := fmt.Sprintf("ws://%v/ws/join_chat?id=%v", serverUrl, chatID)
-	c, _, err := websocket.DefaultDialer.Dial(url, nil)
-	if err != nil {
-		log.Fatalf("dial: %v", err.Error())
-	}
-
-	defer c.Close()
-
-	err = c.WriteMessage(1, []byte(message))
-	if err != nil {
-		log.Fatalf("error on writing message to chatID: %v, err: %v ", chatID, err.Error())
-	}
 
 	return time.Now()
+}
+
+type handledMessageData struct {
+	chatID   int
+	meanTime int
+	maxTime  time.Duration
+	minTime  time.Duration
 }
 
 func TestMessageLatency(t *testing.T) {
@@ -125,6 +122,13 @@ func TestMessageLatency(t *testing.T) {
 
 	startSyncChan := make(chan struct{})
 
+	// магическое деление на 2, чтобы реально было нужное rpm, связано с тем, что отправитель ещё и обрабатывает ответы
+	messageSendTicker := time.NewTicker(time.Minute / messagesPerMinute / 2)
+	defer messageSendTicker.Stop()
+
+	deadLineContext, cancel := context.WithTimeout(context.Background(), time.Minute*messagesSendDeadLine)
+	defer cancel()
+
 	var wg sync.WaitGroup
 
 	for key := range chatsChannels {
@@ -134,27 +138,63 @@ func TestMessageLatency(t *testing.T) {
 		go func() {
 			defer wg.Done()
 
+			resultChan := make(chan handledMessageData, messagesPerMinute*messagesSendDeadLine)
+
 			<-startSyncChan
-			timeStamp := sendMessage(key, "hello, world!")
 
-			var meanDuration time.Duration
-			var minTime = time.Hour
-			var maxTime = time.Nanosecond
+			url := fmt.Sprintf("ws://%v/ws/join_chat?id=%v", serverUrl, key)
+			c, _, err := websocket.DefaultDialer.Dial(url, nil)
+			if err != nil {
+				log.Fatalf("dial: %v", err.Error())
+			}
 
-			var count = 0
-			for elem := range chatsChannels[key] {
-				duration := elem.Sub(timeStamp)
-				meanDuration += duration
-				minTime = min(minTime, duration)
-				maxTime = max(maxTime, duration)
-				count++
-				if count == chatClientsAmount {
-					break
+			defer c.Close()
+
+		foreverLoop:
+			for {
+				select {
+				case <-messageSendTicker.C:
+					err = c.WriteMessage(1, []byte("hello, world!"))
+					if err != nil {
+						log.Fatalf("error on writing message to chatID: %v, err: %v ", key, err.Error())
+					}
+
+					timeStamp := time.Now()
+
+					var meanDuration time.Duration
+					var minTime = time.Hour
+					var maxTime = time.Nanosecond
+
+					var count = 0
+					for elem := range chatsChannels[key] {
+						duration := elem.Sub(timeStamp)
+						meanDuration += duration
+						minTime = min(minTime, duration)
+						maxTime = max(maxTime, duration)
+						count++
+						if count == chatClientsAmount {
+							break
+						}
+					}
+
+					mean := int(meanDuration.Milliseconds()) / chatClientsAmount
+
+					resultChan <- handledMessageData{
+						chatID:   key,
+						meanTime: mean,
+						maxTime:  maxTime,
+						minTime:  minTime,
+					}
+				case <-deadLineContext.Done():
+					break foreverLoop
 				}
 			}
 
-			mean := int(meanDuration.Milliseconds()) / chatClientsAmount
-			fmt.Println(fmt.Sprintf("chatID: %v, mean time: %v milliseconds, max time: %v, min time: %v, chatClients: %v", key, mean, maxTime, minTime, chatClientsAmount))
+			for i := 0; i < len(resultChan); i++ {
+				elem := <-resultChan
+				fmt.Println(fmt.Sprintf("chatID: %v, mean time: %v milliseconds, max time: %v, min time: %v, "+
+					"chatClients: %v", elem.chatID, elem.meanTime, elem.maxTime, elem.minTime, chatClientsAmount))
+			}
 		}()
 	}
 
@@ -164,3 +204,6 @@ func TestMessageLatency(t *testing.T) {
 
 	fmt.Println("Done!")
 }
+
+//TODO: в теле сообщения отправлять таймстамп отправки, тогда получатель знает время отправки и может просто записать всю эту инфу
+//TODO: сделать профилирование в самом сервисе, а здесь только бомбер и затем считывание профайлинга с сервиса
