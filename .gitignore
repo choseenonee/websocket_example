@@ -31,3 +31,6 @@ wsapp
 
 # config
 .env
+
+# my own notes
+notes.md
