@@ -3,6 +3,7 @@ package scheduler
 import (
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	"github.com/prometheus/client_golang/prometheus"
 	"net/http"
 	"sync"
 	"time"
@@ -12,21 +13,23 @@ import (
 )
 
 func InitHubScheduler(logger *log.Logs, repoMessageCreator RepoMessageCreator,
-	repoChatGetter repository.ChatGetterRepo) *HubScheduler {
+	repoChatGetter repository.ChatGetterRepo, messagesCountMetric *prometheus.CounterVec) *HubScheduler {
 	return &HubScheduler{
-		logger:             logger,
-		chats:              &map[int]map[string]*websocket.Conn{},
-		repoMessageCreator: repoMessageCreator,
-		repoChatGetter:     repoChatGetter,
+		logger:              logger,
+		chats:               &map[int]map[string]*websocket.Conn{},
+		repoMessageCreator:  repoMessageCreator,
+		repoChatGetter:      repoChatGetter,
+		messagesCountMetric: messagesCountMetric,
 	}
 }
 
 type HubScheduler struct {
 	sync.RWMutex
-	logger             *log.Logs
-	chats              *map[int]map[string]*websocket.Conn
-	repoChatGetter     repository.ChatGetterRepo
-	repoMessageCreator RepoMessageCreator
+	logger              *log.Logs
+	chats               *map[int]map[string]*websocket.Conn
+	repoChatGetter      repository.ChatGetterRepo
+	repoMessageCreator  RepoMessageCreator
+	messagesCountMetric *prometheus.CounterVec
 }
 
 var upgrader = websocket.Upgrader{
@@ -76,6 +79,7 @@ func (h *HubScheduler) listenRoomConnection(chatID int, clientUUID string, conn 
 		message := *models.InitMessageCreate(clientUUID, string(msgBytes), time.Now(), chatID)
 
 		h.sendRoomMessages(msgType, msgBytes, chatID, conn)
+		h.messagesCountMetric.With(prometheus.Labels{"status": "sent"}).Inc()
 		h.repoMessageCreator.CreateMessage(message)
 	}
 }

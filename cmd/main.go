@@ -2,6 +2,7 @@ package main
 
 import (
 	"websockets/internal/delivery"
+	"websockets/internal/metrics"
 	"websockets/pkg/config"
 	"websockets/pkg/database"
 	"websockets/pkg/log"
@@ -18,5 +19,7 @@ func main() {
 
 	db := database.MustGetDB()
 
-	delivery.Start(logger, db)
+	sendMessageMetrics := metrics.InitMetrics()
+
+	delivery.Start(logger, db, sendMessageMetrics)
 }

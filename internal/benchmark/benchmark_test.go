@@ -99,11 +99,6 @@ func createChatClients(chatID int, output chan time.Time) {
 	wg.Wait()
 }
 
-func sendMessage(chatID int, message string) time.Time {
-
-	return time.Now()
-}
-
 type handledMessageData struct {
 	chatID   int
 	meanTime int
