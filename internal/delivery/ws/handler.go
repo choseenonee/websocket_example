@@ -5,10 +5,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
-	"websockets/internal/ws/scheduler"
+	scheduler2 "websockets/internal/delivery/ws/scheduler"
 )
 
-func InitHubHandler(scheduler *scheduler.HubScheduler) *HubHandler {
+func InitHubHandler(scheduler *scheduler2.HubScheduler) *HubHandler {
 	if scheduler == nil {
 		panic("cant be nil scheduler")
 	}
@@ -19,7 +19,7 @@ func InitHubHandler(scheduler *scheduler.HubScheduler) *HubHandler {
 }
 
 type HubHandler struct {
-	scheduler *scheduler.HubScheduler
+	scheduler *scheduler2.HubScheduler
 }
 
 func (h *HubHandler) JoinChat(c *gin.Context) {
@@ -32,8 +32,8 @@ func (h *HubHandler) JoinChat(c *gin.Context) {
 
 	err = h.scheduler.JoinChat(chatID, c.Writer, c.Request)
 	if err != nil {
-		if errors.Is(err, scheduler.RoomNotFound) {
-			c.JSON(http.StatusBadRequest, scheduler.RoomNotFound)
+		if errors.Is(err, scheduler2.RoomNotFound) {
+			c.JSON(http.StatusBadRequest, scheduler2.RoomNotFound)
 			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
