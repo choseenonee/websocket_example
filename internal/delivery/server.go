@@ -19,9 +19,7 @@ func Start(logger *log.Logs, db *sqlx.DB, messagesCountMetric *prometheus.Counte
 	r := gin.Default()
 
 	r.Static("/static", "../internal/delivery/docs/asyncapi/")
-
 	r.LoadHTMLGlob("../internal/delivery/docs/asyncapi/*.html")
-
 	r.GET("/asyncapi", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "index.html", gin.H{})
 	})
