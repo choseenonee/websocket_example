@@ -25,7 +25,7 @@ func (c chatRepo) parseMessages(rows *sql.Rows) ([]models.Message, error) {
 
 	for rows.Next() {
 		var message models.Message
-		err := rows.Scan(&message.ID, &message.Sender, &message.Content, &message.SendTimeStamp)
+		err := rows.Scan(&message.ID, &message.Sender, &message.Content, &message.SendTimeStamp, &message.ChatID)
 		if err != nil {
 			return nil, err
 		}
@@ -88,11 +88,11 @@ func (c chatRepo) Create(ctx context.Context, chatCreate models.ChatCreate) (int
 }
 
 func (c chatRepo) GetChatMessagesByPage(ctx context.Context, chatID, page int) ([]models.Message, error) {
-	query := `SELECT id, sender, content, send_timestamp FROM messages WHERE messages.chat_id = $1 ORDER BY send_timestamp DESC OFFSET $2 LIMIT $3`
+	query := `SELECT id, sender, content, send_timestamp, chat_id FROM messages WHERE messages.chat_id = $1 ORDER BY send_timestamp DESC OFFSET $2 LIMIT $3`
 
 	paginationPageLength := viper.GetInt(config.PaginationPageLength)
 
-	rows, err := c.db.QueryContext(ctx, query, chatID, (page-1)*paginationPageLength, page)
+	rows, err := c.db.QueryContext(ctx, query, chatID, (page-1)*paginationPageLength, viper.GetInt(config.PaginationPageLength))
 	if err != nil {
 		return nil, err
 	}
