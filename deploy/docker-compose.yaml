@@ -5,6 +5,7 @@ services:
       dockerfile: deploy/Dockerfile
     ports:
       - "8080:3002"
+      - "2112:2112"
     environment:
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
@@ -45,3 +46,14 @@ services:
       DBHOST: "postgres-database"
     depends_on:
       - postgres-database
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    depends_on:
+      - app
