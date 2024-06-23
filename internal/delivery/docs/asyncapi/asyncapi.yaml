@@ -1,45 +1,31 @@
-asyncapi: 3.0.0
+asyncapi: '2.0.0'
 info:
   title: WebSocket API
-  version: 1.0.0
+  version: '1.0.0'
 servers:
   production:
-    host: 'localhost:8080'
-    pathname: /ws
+    url: ws://localhost:8080/ws
     protocol: wss
 channels:
   /ws:
-    address: /ws
-    messages:
-      publish.message:
-        contentType: application/json
-        payload:
-          type: object
-          properties:
-            data:
-              type: object
-              additionalProperties: true
-      subscribe.message:
-        contentType: application/json
-        payload:
-          type: object
-          properties:
-            data:
-              type: object
-              additionalProperties: true
     description: WebSocket connection
-operations:
-  /ws.publish:
-    action: receive
-    channel:
-      $ref: '#/channels/~1ws'
-    summary: Publish messages
-    messages:
-      - $ref: '#/channels/~1ws/messages/publish.message'
-  /ws.subscribe:
-    action: send
-    channel:
-      $ref: '#/channels/~1ws'
-    summary: Subscribe to messages
-    messages:
-      - $ref: '#/channels/~1ws/messages/subscribe.message'
+    subscribe:
+      summary: Subscribe to messages
+      message:
+        contentType: application/json
+        payload:
+          type: object
+          properties:
+            data:
+              type: object
+              additionalProperties: false
+    publish:
+      summary: Publish messages
+      message:
+        contentType: application/json
+        payload:
+          type: object
+          properties:
+            data:
+              type: object
+              additionalProperties: false
