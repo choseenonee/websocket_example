@@ -42,8 +42,8 @@ func InitLogger() (*Logs, *os.File, *os.File) {
 		panic("Error opening error log file")
 	}
 
-	infoLogger := zerolog.New(loggerInfoFile).With().Timestamp().Caller().Logger()
-	errorLogger := zerolog.New(loggerErrorFile).With().Timestamp().Caller().Logger()
+	infoLogger := zerolog.New(loggerInfoFile).With().Timestamp().CallerWithSkipFrameCount(3).Logger()
+	errorLogger := zerolog.New(loggerErrorFile).With().Timestamp().CallerWithSkipFrameCount(3).Logger()
 
 	log := &Logs{
 		infoLogger:  &infoLogger,

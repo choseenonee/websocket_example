@@ -11,6 +11,7 @@ services:
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_HOST: "postgres-database"
+      JAEGER_HOST: "jaeger"
     depends_on:
       postgres-database:
         condition: service_healthy
@@ -57,3 +58,9 @@ services:
       - '--config.file=/etc/prometheus/prometheus.yml'
     depends_on:
       - app
+
+  jaeger:
+    image: jaegertracing/all-in-one
+    ports:
+      - "14268:14268"
+      - "16686:16686"

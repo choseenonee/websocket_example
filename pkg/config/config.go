@@ -15,6 +15,8 @@ const (
 	DBHost               = "DB_HOST"
 	PaginationPageLength = "PAGINATION_PAGE_LENGTH"
 	DBTimeout            = "DB_TIMEOUT"
+	JaegerHost           = "JAEGER_HOST"
+	JaegerPort           = "JAEGER_PORT"
 )
 
 func InitConfig() {

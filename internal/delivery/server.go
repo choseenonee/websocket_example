@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
+	"go.opentelemetry.io/otel/trace"
 	"net/http"
 	"websockets/internal/delivery/docs"
 	"websockets/internal/delivery/middleware"
@@ -15,7 +16,7 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-func Start(logger *log.Logs, db *sqlx.DB, prometheusMetrics *metrics.PrometheusMetrics) {
+func Start(logger *log.Logs, db *sqlx.DB, prometheusMetrics *metrics.PrometheusMetrics, tracer trace.Tracer) {
 	r := gin.Default()
 
 	r.Static("/static", "../internal/delivery/docs/asyncapi/")
@@ -30,7 +31,7 @@ func Start(logger *log.Logs, db *sqlx.DB, prometheusMetrics *metrics.PrometheusM
 	mdw := middleware.InitMiddleware(logger)
 	r.Use(mdw.CORSMiddleware())
 
-	routers.RegisterChatRouter(r, db)
+	routers.RegisterChatRouter(r, db, tracer)
 	routers.RegisterWebSocketRouter(r, db, logger, prometheusMetrics)
 
 	if err := r.Run("0.0.0.0:3002"); err != nil {
