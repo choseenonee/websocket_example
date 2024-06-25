@@ -4,18 +4,18 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
-	"github.com/prometheus/client_golang/prometheus"
 	"net/http"
 	"websockets/internal/delivery/docs"
 	"websockets/internal/delivery/middleware"
 	"websockets/internal/delivery/routers"
+	"websockets/internal/metrics"
 	"websockets/pkg/log"
 
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-func Start(logger *log.Logs, db *sqlx.DB, messagesCountMetric *prometheus.CounterVec) {
+func Start(logger *log.Logs, db *sqlx.DB, prometheusMetrics *metrics.PrometheusMetrics) {
 	r := gin.Default()
 
 	r.Static("/static", "../internal/delivery/docs/asyncapi/")
@@ -31,7 +31,7 @@ func Start(logger *log.Logs, db *sqlx.DB, messagesCountMetric *prometheus.Counte
 	r.Use(mdw.CORSMiddleware())
 
 	routers.RegisterChatRouter(r, db)
-	routers.RegisterWebSocketRouter(r, db, logger, messagesCountMetric)
+	routers.RegisterWebSocketRouter(r, db, logger, prometheusMetrics)
 
 	if err := r.Run("0.0.0.0:3002"); err != nil {
 		panic(fmt.Sprintf("error running client: %v", err.Error()))

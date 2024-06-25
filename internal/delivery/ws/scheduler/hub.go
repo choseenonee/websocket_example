@@ -3,33 +3,33 @@ package scheduler
 import (
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
-	"github.com/prometheus/client_golang/prometheus"
 	"net/http"
 	"sync"
 	"time"
+	"websockets/internal/metrics"
 	"websockets/internal/models"
 	"websockets/internal/repository"
 	"websockets/pkg/log"
 )
 
 func InitHubScheduler(logger *log.Logs, repoMessageCreator RepoMessageCreator,
-	repoChatGetter repository.ChatGetterRepo, messagesCountMetric *prometheus.CounterVec) *HubScheduler {
+	repoChatGetter repository.ChatGetterRepo, prometheusMetrics metrics.PrometheusMetrics) *HubScheduler {
 	return &HubScheduler{
-		logger:              logger,
-		chats:               &map[int]map[string]*websocket.Conn{},
-		repoMessageCreator:  repoMessageCreator,
-		repoChatGetter:      repoChatGetter,
-		messagesCountMetric: messagesCountMetric,
+		logger:             logger,
+		chats:              &map[int]map[string]*websocket.Conn{},
+		repoMessageCreator: repoMessageCreator,
+		repoChatGetter:     repoChatGetter,
+		prometheusMetrics:  prometheusMetrics,
 	}
 }
 
 type HubScheduler struct {
 	sync.RWMutex
-	logger              *log.Logs
-	chats               *map[int]map[string]*websocket.Conn
-	repoChatGetter      repository.ChatGetterRepo
-	repoMessageCreator  RepoMessageCreator
-	messagesCountMetric *prometheus.CounterVec
+	logger             *log.Logs
+	chats              *map[int]map[string]*websocket.Conn
+	repoChatGetter     repository.ChatGetterRepo
+	repoMessageCreator RepoMessageCreator
+	prometheusMetrics  metrics.PrometheusMetrics
 }
 
 var upgrader = websocket.Upgrader{
@@ -40,30 +40,30 @@ var upgrader = websocket.Upgrader{
 func (h *HubScheduler) removeClient(chatID int, clientUUID string) {
 	h.Lock()
 	defer h.Unlock()
+
 	delete((*h.chats)[chatID], clientUUID)
+	h.prometheusMetrics.UsersOnline.Dec()
+
 	if len((*h.chats)[chatID]) == 0 {
 		delete(*h.chats, chatID)
+		h.prometheusMetrics.ChatsOnline.Dec()
 	}
 }
 
-func (h *HubScheduler) sendRoomMessages(msgType int, msgBytes []byte, chatID int, senderConn *websocket.Conn) {
+func (h *HubScheduler) sendRoomMessages(msgType int, message *models.MessageCreate, senderConn *websocket.Conn) {
 	h.RLock()
 	defer h.RUnlock()
 
-	for _, conn := range (*h.chats)[chatID] {
+	for _, conn := range (*h.chats)[message.ChatID] {
 		if conn == senderConn {
 			continue
 		}
-		err := conn.WriteMessage(msgType, msgBytes)
+		err := conn.WriteMessage(msgType, message.Content)
 		if err != nil {
-			//h.removeClient(chatID, clientUUID)
-			//cnErr := conn.Close()
-			//if cnErr != nil {
-			//	h.logger.Error(cnErr.Error())
-			//}
 			h.logger.Error(err.Error())
 		}
 	}
+	h.prometheusMetrics.MessagesLatency.Observe(time.Since(message.SendTimeStamp).Seconds())
 }
 
 func (h *HubScheduler) listenRoomConnection(chatID int, clientUUID string, conn *websocket.Conn) {
@@ -76,10 +76,10 @@ func (h *HubScheduler) listenRoomConnection(chatID int, clientUUID string, conn 
 			return
 		}
 
-		message := *models.InitMessageCreate(clientUUID, string(msgBytes), time.Now(), chatID)
+		message := models.InitMessageCreate(clientUUID, msgBytes, time.Now(), chatID)
 
-		h.sendRoomMessages(msgType, msgBytes, chatID, conn)
-		h.messagesCountMetric.With(prometheus.Labels{"status": "sent"}).Inc()
+		h.sendRoomMessages(msgType, message, conn)
+		h.prometheusMetrics.MessagesSent.Inc()
 		h.repoMessageCreator.CreateMessage(message)
 	}
 }
@@ -106,9 +106,12 @@ func (h *HubScheduler) JoinChat(chatID int, w http.ResponseWriter, r *http.Reque
 
 	clientUUID := uuid.New().String()
 
+	h.prometheusMetrics.UsersOnline.Inc()
+
 	switch (*h.chats)[chatID] {
 	case nil:
 		(*h.chats)[chatID] = map[string]*websocket.Conn{clientUUID: conn}
+		h.prometheusMetrics.ChatsOnline.Inc()
 	default:
 		(*h.chats)[chatID][clientUUID] = conn
 	}

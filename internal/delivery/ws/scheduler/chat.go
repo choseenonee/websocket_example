@@ -12,18 +12,18 @@ import (
 )
 
 type RepoMessageCreator interface {
-	CreateMessage(messageCreate models.MessageCreate)
+	CreateMessage(messageCreate *models.MessageCreate)
 }
 
 type ChatRepoScheduler struct {
-	messages chan models.MessageCreate
+	messages chan *models.MessageCreate
 	chatRepo repository.ChatRepo
 	logger   *log.Logs
 }
 
 func InitChatRepoScheduler(chatRepo repository.ChatRepo, logger *log.Logs) RepoMessageCreator {
 	chatRepoScheduler := ChatRepoScheduler{
-		messages: make(chan models.MessageCreate, 100),
+		messages: make(chan *models.MessageCreate, 100),
 		chatRepo: chatRepo,
 		logger:   logger,
 	}
@@ -48,16 +48,16 @@ func (c *ChatRepoScheduler) run() {
 			ctx, cancel := context.WithTimeout(context.Background(),
 				time.Duration(viper.GetInt(config.DBTimeout))*time.Millisecond)
 
-			_, err := c.chatRepo.CreateMessage(ctx, message)
+			_, err := c.chatRepo.CreateMessage(ctx, *message)
 			if err != nil {
 				c.logger.Error(err.Error())
-				writeMessageToFile(&message, c.logger)
+				writeMessageToFile(message, c.logger)
 			}
 			cancel()
 		}
 	}
 }
 
-func (c *ChatRepoScheduler) CreateMessage(messageCreate models.MessageCreate) {
+func (c *ChatRepoScheduler) CreateMessage(messageCreate *models.MessageCreate) {
 	c.messages <- messageCreate
 }

@@ -105,7 +105,7 @@ func (c chatRepo) GetChatsByName(ctx context.Context, name string, page int) ([]
 
 	paginationPageLength := viper.GetInt(config.PaginationPageLength)
 
-	rows, err := c.db.QueryContext(ctx, query, fmt.Sprintf("%v%", name), (page-1)*paginationPageLength, page)
+	rows, err := c.db.QueryContext(ctx, query, fmt.Sprintf("%v%", name), (page-1)*paginationPageLength, viper.GetInt(config.PaginationPageLength))
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +118,7 @@ func (c chatRepo) GetChatsByPage(ctx context.Context, page int) ([]models.Chat, 
 
 	paginationPageLength := viper.GetInt(config.PaginationPageLength)
 
-	rows, err := c.db.QueryContext(ctx, query, (page-1)*paginationPageLength, page)
+	rows, err := c.db.QueryContext(ctx, query, (page-1)*paginationPageLength, viper.GetInt(config.PaginationPageLength))
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +134,7 @@ func (c chatRepo) CreateMessage(ctx context.Context, messageCreate models.Messag
 
 	query := `INSERT INTO messages (sender, content, send_timestamp, chat_id) VALUES ($1, $2, $3, $4) RETURNING id;`
 
-	row := tx.QueryRowContext(ctx, query, messageCreate.Sender, messageCreate.Content, messageCreate.SendTimeStamp,
+	row := tx.QueryRowContext(ctx, query, messageCreate.Sender, string(messageCreate.Content), messageCreate.SendTimeStamp,
 		messageCreate.ChatID)
 
 	var messageID int
