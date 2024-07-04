@@ -21,7 +21,7 @@ type ChatRepoScheduler struct {
 	messages     chan *models.MessageCreate
 	chatRepo     repository.ChatRepo
 	logger       *log.Logs
-	workersCount atomic.Uint32
+	workersCount atomic.Int32
 	promMetrics  prometheus.Gauge
 }
 
