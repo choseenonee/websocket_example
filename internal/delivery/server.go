@@ -32,7 +32,7 @@ func Start(logger *log.Logs, db *sqlx.DB, prometheusMetrics *metrics.PrometheusM
 	r.Use(mdw.CORSMiddleware())
 
 	routers.RegisterChatRouter(r, db, tracer)
-	routers.RegisterWebSocketRouter(r, db, logger, prometheusMetrics)
+	routers.RegisterWebSocketRouter(r, db, logger, prometheusMetrics, tracer)
 
 	if err := r.Run("0.0.0.0:3002"); err != nil {
 		panic(fmt.Sprintf("error running client: %v", err.Error()))

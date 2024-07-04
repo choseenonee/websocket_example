@@ -33,5 +33,7 @@ func MustGetDB() *sqlx.DB {
 		panic(fmt.Sprintf("Error while connecting to DB. Error: %v", err.Error()))
 	}
 
+	db.SetMaxOpenConns(viper.GetInt(config.DBMaxOpenConns))
+
 	return db
 }

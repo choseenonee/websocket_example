@@ -8,15 +8,17 @@ import (
 )
 
 const (
-	DBName               = "DB_NAME"
-	DBUser               = "DB_USER"
-	DBPassword           = "DB_PASSWORD"
-	DBPort               = "DB_PORT"
-	DBHost               = "DB_HOST"
-	PaginationPageLength = "PAGINATION_PAGE_LENGTH"
-	DBTimeout            = "DB_TIMEOUT"
-	JaegerHost           = "JAEGER_HOST"
-	JaegerPort           = "JAEGER_PORT"
+	DBName                      = "DB_NAME"
+	DBUser                      = "DB_USER"
+	DBPassword                  = "DB_PASSWORD"
+	DBPort                      = "DB_PORT"
+	DBHost                      = "DB_HOST"
+	DBMaxOpenConns              = "DB_MAX_OPEN_CONNS"
+	PaginationPageLength        = "PAGINATION_PAGE_LENGTH"
+	DBTimeout                   = "DB_TIMEOUT"
+	JaegerHost                  = "JAEGER_HOST"
+	JaegerPort                  = "JAEGER_PORT"
+	ChatRepoMessagesNewWorkerOn = "CHAT_REPO_MESSAGES_NEW_WORKER_ON"
 )
 
 func InitConfig() {
