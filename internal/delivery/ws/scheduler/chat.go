@@ -3,6 +3,7 @@ package scheduler
 import (
 	"context"
 	"encoding/json"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/viper"
 	"sync/atomic"
 	"time"
@@ -21,13 +22,16 @@ type ChatRepoScheduler struct {
 	chatRepo     repository.ChatRepo
 	logger       *log.Logs
 	workersCount atomic.Uint32
+	promMetrics  prometheus.Gauge
 }
 
-func InitChatRepoScheduler(chatRepo repository.ChatRepo, logger *log.Logs) RepoMessageCreator {
+func InitChatRepoScheduler(chatRepo repository.ChatRepo, logger *log.Logs,
+	promMetrics prometheus.Gauge) RepoMessageCreator {
 	chatRepoScheduler := ChatRepoScheduler{
-		messages: make(chan *models.MessageCreate, 100),
-		chatRepo: chatRepo,
-		logger:   logger,
+		messages:    make(chan *models.MessageCreate, 100),
+		chatRepo:    chatRepo,
+		logger:      logger,
+		promMetrics: promMetrics,
 	}
 
 	go chatRepoScheduler.run()
@@ -58,6 +62,7 @@ func (c *ChatRepoScheduler) run() {
 			cancel()
 
 			if len(c.messages) >= viper.GetInt(config.ChatRepoMessagesNewWorkerOn) && c.workersCount.Load() < 100 {
+				c.promMetrics.Inc()
 				c.workersCount.Add(1)
 				go c.newRunWorker()
 			}
@@ -84,6 +89,7 @@ func (c *ChatRepoScheduler) newRunWorker() {
 			cancel()
 
 			if len(c.messages) < viper.GetInt(config.ChatRepoMessagesNewWorkerOn) {
+				c.promMetrics.Dec()
 				c.workersCount.Add(-1)
 				return
 			}

@@ -6,10 +6,11 @@ import (
 )
 
 type PrometheusMetrics struct {
-	MessagesSent    prometheus.Counter
-	MessagesLatency prometheus.Histogram
-	ChatsOnline     prometheus.Gauge
-	UsersOnline     prometheus.Gauge
+	MessagesSent       prometheus.Counter
+	MessagesLatency    prometheus.Histogram
+	ChatsOnline        prometheus.Gauge
+	UsersOnline        prometheus.Gauge
+	MessageToDbWorkers prometheus.Gauge
 }
 
 func InitPrometheusMetrics() *PrometheusMetrics {
@@ -58,10 +59,22 @@ func InitPrometheusMetrics() *PrometheusMetrics {
 		log.Fatalf("PROMETHEUS ERR: %v", err)
 	}
 
+	messageToDbWorkers := prometheus.NewGauge(
+		prometheus.GaugeOpts{
+			Name: "message_to_db_workers_total",
+			Help: "Total number of goroutines that sends new messages to db",
+		},
+	)
+	err = prometheus.Register(messageToDbWorkers)
+	if err != nil {
+		log.Fatalf("PROMETHEUS ERR: %v", err)
+	}
+
 	return &PrometheusMetrics{
-		MessagesSent:    messagesSent,
-		MessagesLatency: messagesLatency,
-		ChatsOnline:     chatsOnline,
-		UsersOnline:     usersOnline,
+		MessagesSent:       messagesSent,
+		MessagesLatency:    messagesLatency,
+		ChatsOnline:        chatsOnline,
+		UsersOnline:        usersOnline,
+		MessageToDbWorkers: messageToDbWorkers,
 	}
 }

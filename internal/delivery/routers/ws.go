@@ -16,7 +16,7 @@ func RegisterWebSocketRouter(r *gin.Engine, db *sqlx.DB, logger *log.Logs, prome
 	wsRouter := r.Group("/ws")
 
 	chatRepo := repository.InitChatRepo(db)
-	chatScheduler := scheduler2.InitChatRepoScheduler(chatRepo, logger)
+	chatScheduler := scheduler2.InitChatRepoScheduler(chatRepo, logger, prometheusMetrics.MessageToDbWorkers)
 	chatGetterRepo := repository.InitChatGetterRepo(chatRepo)
 	hubScheduler := scheduler2.InitHubScheduler(logger, chatScheduler, chatGetterRepo, *prometheusMetrics)
 	hubHandler := ws.InitHubHandler(hubScheduler, tracer)
