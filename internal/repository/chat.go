@@ -105,7 +105,9 @@ func (c chatRepo) GetChatsByName(ctx context.Context, name string, page int) ([]
 
 	paginationPageLength := viper.GetInt(config.PaginationPageLength)
 
-	rows, err := c.db.QueryContext(ctx, query, fmt.Sprintf("%v%", name), (page-1)*paginationPageLength, viper.GetInt(config.PaginationPageLength))
+	queryLikeString := name + "%"
+
+	rows, err := c.db.QueryContext(ctx, query, queryLikeString, (page-1)*paginationPageLength, viper.GetInt(config.PaginationPageLength))
 	if err != nil {
 		return nil, err
 	}

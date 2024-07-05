@@ -2,6 +2,41 @@ info:
   contact: {}
 paths:
   /chat:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: Name (starts with)
+        in: query
+        name: name
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully returned chats
+          schema:
+            type: integer
+        "400":
+          description: Invalid input
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get chats by page and name
+      tags:
+      - chat
     post:
       consumes:
       - application/json
@@ -31,38 +66,6 @@ paths:
               type: string
             type: object
       summary: Create chat
-      tags:
-      - chat
-  /chat/by_page:
-    get:
-      consumes:
-      - application/json
-      parameters:
-      - description: Page
-        in: query
-        name: page
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Successfully returned chats
-          schema:
-            type: integer
-        "400":
-          description: Invalid input
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "500":
-          description: Internal server error
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Get chats by page
       tags:
       - chat
   /chat/messages:

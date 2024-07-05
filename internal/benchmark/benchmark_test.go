@@ -17,9 +17,9 @@ import (
 const (
 	chatsAmount       = 20
 	chatClientsAmount = 20 // will panic if less than 2
-	serverUrl         = "95.84.137.217:3002"
-	//serverUrl = "0.0.0.0:3002"
-	messagesPerMinute    = 120 // in a minute :))))
+	//serverUrl         = "95.84.137.217:3002"
+	serverUrl            = "0.0.0.0:8080"
+	messagesPerMinute    = 500 // in a minute :))))
 	messagesSendDeadLine = 1   // minutes
 )
 
@@ -29,7 +29,7 @@ type createChatResponse struct {
 
 // CreateChat returns id of created chat
 func createChat() int {
-	url := fmt.Sprintf("http://%v/chat/create_chat?name=%v", serverUrl, uuid.NewString())
+	url := fmt.Sprintf("http://%v/chat?name=%v", serverUrl, uuid.NewString())
 
 	req, err := http.NewRequest("POST", url, nil) // No body is needed for this request
 	if err != nil {

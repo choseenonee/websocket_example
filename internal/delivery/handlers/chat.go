@@ -65,21 +65,21 @@ func (ch *ChatHandler) CreateChat(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"chat_id": chatID})
 }
 
-// @Summary Get chats by page
+// @Summary Get chats by page and name
 // @Tags chat
 // @Accept  json
 // @Produce  json
 // @Param page query int true "Page"
+// @Param name query string false "Name (starts with)"
 // @Success 200 {object} int "Successfully returned chats"
 // @Failure 400 {object} map[string]string "Invalid input"
 // @Failure 500 {object} map[string]string "Internal server error"
-// @Router /chat/by_page [get]
+// @Router /chat [get]
 func (ch *ChatHandler) GetChatsByPage(c *gin.Context) {
 	ctx, span := ch.tracer.Start(c.Request.Context(), "Create chat")
 	defer span.End()
 
 	pageRaw := c.Query("page")
-
 	page, err := strconv.Atoi(pageRaw)
 	if err != nil {
 		span.RecordError(err, trace.WithAttributes(
@@ -91,7 +91,16 @@ func (ch *ChatHandler) GetChatsByPage(c *gin.Context) {
 		return
 	}
 
-	chats, err := ch.chatRepository.GetChatsByPage(ctx, page)
+	name := c.Query("name")
+
+	var chats []models.Chat
+	switch name {
+	case "":
+		chats, err = ch.chatRepository.GetChatsByPage(ctx, page)
+	default:
+		chats, err = ch.chatRepository.GetChatsByName(ctx, name, page)
+	}
+
 	if err != nil {
 		span.RecordError(err, trace.WithAttributes(
 			attribute.String("Internal server error", err.Error())),

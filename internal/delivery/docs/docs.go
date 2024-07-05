@@ -16,7 +16,7 @@ const docTemplate = `{
     "basePath": "{{.BasePath}}",
     "paths": {
         "/chat": {
-            "post": {
+            "get": {
                 "consumes": [
                     "application/json"
                 ],
@@ -26,19 +26,25 @@ const docTemplate = `{
                 "tags": [
                     "chat"
                 ],
-                "summary": "Create chat",
+                "summary": "Get chats by page and name",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "Chat name",
-                        "name": "name",
+                        "type": "integer",
+                        "description": "Page",
+                        "name": "page",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Name (starts with)",
+                        "name": "name",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully created chat with id",
+                        "description": "Successfully returned chats",
                         "schema": {
                             "type": "integer"
                         }
@@ -62,10 +68,8 @@ const docTemplate = `{
                         }
                     }
                 }
-            }
-        },
-        "/chat/by_page": {
-            "get": {
+            },
+            "post": {
                 "consumes": [
                     "application/json"
                 ],
@@ -75,19 +79,19 @@ const docTemplate = `{
                 "tags": [
                     "chat"
                 ],
-                "summary": "Get chats by page",
+                "summary": "Create chat",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "Page",
-                        "name": "page",
+                        "type": "string",
+                        "description": "Chat name",
+                        "name": "name",
                         "in": "query",
                         "required": true
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully returned chats",
+                        "description": "Successfully created chat with id",
                         "schema": {
                             "type": "integer"
                         }
@@ -182,6 +186,8 @@ var SwaggerInfo = &swag.Spec{
 	Description:      "",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
+	LeftDelim:        "{{",
+	RightDelim:       "}}",
 }
 
 func init() {
