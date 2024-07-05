@@ -8,6 +8,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const messageInput = document.getElementById('messageInput');
     const sendMessageButton = document.getElementById('sendMessage');
     const leaveChatButton = document.getElementById('leaveChat');
+    const createChatButton = document.getElementById('createChat');
+    const errorContainer = document.getElementById('errorContainer');
 
     let currentPage = 1;
     let currentChatId = null;
@@ -131,6 +133,34 @@ document.addEventListener('DOMContentLoaded', () => {
             socket = null;
             chatDialog.classList.add('hidden');
             messagesContainer.innerHTML = '';
+        }
+    });
+
+    createChatButton.addEventListener('click', async () => {
+        const chatName = chatNameInput.value;
+        if (chatName) {
+            try {
+                const response = await fetch(`http://0.0.0.0:8080/chat/?name=${chatName}`, {
+                    method: 'POST',
+                    headers: {
+                        'accept': 'application/json'
+                    }
+                });
+                if (!response.ok) {
+                    let payload = await response.json()
+                    throw new Error('Failed to create chat' + payload['err']);
+                }
+                alert("Chat created successfully!")
+                const data = await response.json();
+                const newChatId = data.chat_id;
+                fetchMessages(newChatId);
+                chatDialog.classList.remove('hidden');
+                connectWebSocket(newChatId);
+                errorContainer.classList.add('hidden');
+            } catch (error) {
+                console.error('Error creating chat:', error);
+                alert(error.message)
+            }
         }
     });
 
