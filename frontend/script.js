@@ -5,9 +5,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const messagesContainer = document.getElementById('messagesContainer');
     const prevPageButton = document.getElementById('prevPage');
     const nextPageButton = document.getElementById('nextPage');
+    const messageInput = document.getElementById('messageInput');
+    const sendMessageButton = document.getElementById('sendMessage');
 
     let currentPage = 1;
     let currentChatId = null;
+    let socket = null;
 
     const fetchChats = async (name = '') => {
         try {
@@ -50,6 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
             card.addEventListener('click', () => {
                 fetchMessages(chat.id);
                 chatDialog.classList.remove('hidden');
+                connectWebSocket(chat.id);
             });
             chatCardsContainer.appendChild(card);
         });
@@ -68,8 +72,52 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const updatePaginationButtons = (messagesCount) => {
         prevPageButton.disabled = currentPage === 1;
-        nextPageButton.disabled = messagesCount < 5; // Assuming 10 messages per page
+        nextPageButton.disabled = messagesCount < 10; // Assuming 10 messages per page
     };
+
+    const connectWebSocket = (chatId) => {
+        if (socket) {
+            socket.close();
+        }
+        socket = new WebSocket(`ws://0.0.0.0:8080/ws/join_chat?id=${chatId}`);
+
+        socket.onopen = () => {
+            console.log('WebSocket connection established');
+        };
+
+        socket.onmessage = (event) => {
+            const message = JSON.parse(event.data);
+            const messageElement = document.createElement('div');
+            messageElement.className = 'message';
+            messageElement.textContent = `${message.timestamp}, ${message.sender}: ${message.content}`;
+            messagesContainer.appendChild(messageElement);
+        };
+
+        socket.onclose = (event) => {
+            if (event.wasClean) {
+                console.log(`WebSocket connection closed cleanly, code=${event.code}, reason=${event.reason}`);
+            } else {
+                console.error('WebSocket connection closed unexpectedly');
+            }
+        };
+
+        socket.onerror = (error) => {
+            console.error('WebSocket error:', error);
+        };
+    };
+
+    sendMessageButton.addEventListener('click', () => {
+        const message = messageInput.value;
+        if (message && socket) {
+            socket.send(JSON.stringify({ content: message }));
+            messageInput.value = '';
+        }
+    });
+
+    chatNameInput.addEventListener('input', () => {
+        const name = chatNameInput.value;
+        fetchChats(name);
+    });
 
     prevPageButton.addEventListener('click', () => {
         if (currentPage > 1) {
@@ -79,11 +127,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     nextPageButton.addEventListener('click', () => {
         fetchMessages(currentChatId, currentPage + 1);
-    });
-
-    chatNameInput.addEventListener('input', () => {
-        const name = chatNameInput.value;
-        fetchChats(name);
     });
 
     // Initial fetch

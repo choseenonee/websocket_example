@@ -34,6 +34,10 @@ type HubScheduler struct {
 }
 
 var upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		// Разрешить все источники
+		return true
+	},
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 }
