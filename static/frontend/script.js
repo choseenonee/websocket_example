@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const fetchChats = async (name = '') => {
         try {
-            const response = await fetch(`http://0.0.0.0:8080/chat/?page=1&name=${name}`, {
+            const response = await fetch(`/chat/?page=1&name=${name}`, {
                 headers: {
                     'accept': 'application/json'
                 }
@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const fetchMessages = async (chatId, page = 1) => {
         try {
-            const response = await fetch(`http://0.0.0.0:8080/chat/messages?chat_id=${chatId}&page=${page}`, {
+            const response = await fetch(`/chat/messages?chat_id=${chatId}&page=${page}`, {
                 headers: {
                     'accept': 'application/json'
                 }
@@ -140,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const chatName = chatNameInput.value;
         if (chatName) {
             try {
-                const response = await fetch(`http://0.0.0.0:8080/chat/?name=${chatName}`, {
+                const response = await fetch(`/chat/?name=${chatName}`, {
                     method: 'POST',
                     headers: {
                         'accept': 'application/json'

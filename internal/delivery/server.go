@@ -22,9 +22,13 @@ func Start(logger *log.Logs, db *sqlx.DB, prometheusMetrics *metrics.PrometheusM
 	mdw := middleware.InitMiddleware(logger)
 	r.Use(mdw.CORSMiddleware())
 
-	r.Static("/static", "../internal/delivery/docs/asyncapi/")
-	r.LoadHTMLGlob("../internal/delivery/docs/asyncapi/*.html")
+	r.Static("/static", "../static")
+	r.LoadHTMLFiles("../static/asyncapi/asyncapi.html", "../static/frontend/index.html")
+
 	r.GET("/asyncapi", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "asyncapi.html", gin.H{})
+	})
+	r.GET("/frontend", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "index.html", gin.H{})
 	})
 
@@ -34,7 +38,7 @@ func Start(logger *log.Logs, db *sqlx.DB, prometheusMetrics *metrics.PrometheusM
 	routers.RegisterChatRouter(r, db, tracer)
 	routers.RegisterWebSocketRouter(r, db, logger, prometheusMetrics, tracer)
 
-	if err := r.Run("0.0.0.0:8080"); err != nil {
+	if err := r.Run("0.0.0.0:3002"); err != nil {
 		panic(fmt.Sprintf("error running client: %v", err.Error()))
 	}
 }
