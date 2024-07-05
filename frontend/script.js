@@ -109,7 +109,17 @@ document.addEventListener('DOMContentLoaded', () => {
     sendMessageButton.addEventListener('click', () => {
         const message = messageInput.value;
         if (message && socket) {
-            socket.send(JSON.stringify({ content: message }));
+            let socketMessage = JSON.stringify(message).replace("\"", "")
+            socketMessage = socketMessage.split(/(?:)/u).reverse().join("").replace("\"", "").split(/(?:)/u).reverse().join("");
+
+            socket.send(socketMessage);
+
+            // Отображение отправленного сообщения на экране
+            const messageElement = document.createElement('div');
+            messageElement.className = 'message';
+            messageElement.textContent = `${new Date()} Вы: ${message}`;
+            messagesContainer.appendChild(messageElement);
+
             messageInput.value = '';
         }
     });
