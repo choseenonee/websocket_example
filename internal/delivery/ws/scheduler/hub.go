@@ -1,6 +1,7 @@
 package scheduler
 
 import (
+	"encoding/json"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"net/http"
@@ -58,7 +59,8 @@ func (h *HubScheduler) sendRoomMessages(msgType int, message *models.MessageCrea
 		if conn == senderConn {
 			continue
 		}
-		err := conn.WriteMessage(msgType, message.Content)
+		jsonBytes, _ := json.Marshal(message)
+		err := conn.WriteMessage(msgType, jsonBytes)
 		if err != nil {
 			h.logger.Error(err.Error())
 		}
@@ -76,7 +78,7 @@ func (h *HubScheduler) listenRoomConnection(chatID int, clientUUID string, conn 
 			return
 		}
 
-		message := models.InitMessageCreate(clientUUID, msgBytes, time.Now(), chatID)
+		message := models.InitMessageCreate(clientUUID, string(msgBytes), time.Now(), chatID)
 
 		h.sendRoomMessages(msgType, message, conn)
 		h.prometheusMetrics.MessagesSent.Inc()
