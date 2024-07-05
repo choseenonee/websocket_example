@@ -13,7 +13,7 @@ type Chat struct {
 
 type MessageCreate struct {
 	Sender        string    `json:"sender"`
-	Content       []byte    `json:"content"`
+	Content       []byte    `json:"content,omitempty"`
 	SendTimeStamp time.Time `json:"timestamp"`
 	ChatID        int       `json:"chat_id"`
 }
@@ -21,6 +21,11 @@ type MessageCreate struct {
 type Message struct {
 	MessageCreate
 	ID int `json:"id"`
+}
+
+type MessageWithStringContent struct {
+	Message
+	Content string `json:"content"`
 }
 
 func InitMessageCreate(sender string, content []byte, timestamp time.Time, chatID int) *MessageCreate {

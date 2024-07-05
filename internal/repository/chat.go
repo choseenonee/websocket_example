@@ -20,11 +20,11 @@ func InitChatRepo(db *sqlx.DB) ChatRepo {
 	}
 }
 
-func (c chatRepo) parseMessages(rows *sql.Rows) ([]models.Message, error) {
-	var messages []models.Message
+func (c chatRepo) parseMessages(rows *sql.Rows) ([]models.MessageWithStringContent, error) {
+	var messages []models.MessageWithStringContent
 
 	for rows.Next() {
-		var message models.Message
+		var message models.MessageWithStringContent
 		err := rows.Scan(&message.ID, &message.Sender, &message.Content, &message.SendTimeStamp, &message.ChatID)
 		if err != nil {
 			return nil, err
@@ -87,7 +87,7 @@ func (c chatRepo) Create(ctx context.Context, chatCreate models.ChatCreate) (int
 	return chatID, nil
 }
 
-func (c chatRepo) GetChatMessagesByPage(ctx context.Context, chatID, page int) ([]models.Message, error) {
+func (c chatRepo) GetChatMessagesByPage(ctx context.Context, chatID, page int) ([]models.MessageWithStringContent, error) {
 	query := `SELECT id, sender, content, send_timestamp, chat_id FROM messages WHERE messages.chat_id = $1 ORDER BY send_timestamp DESC OFFSET $2 LIMIT $3`
 
 	paginationPageLength := viper.GetInt(config.PaginationPageLength)
