@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const nextPageButton = document.getElementById('nextPage');
     const messageInput = document.getElementById('messageInput');
     const sendMessageButton = document.getElementById('sendMessage');
+    const leaveChatButton = document.getElementById('leaveChat');
 
     let currentPage = 1;
     let currentChatId = null;
@@ -121,6 +122,15 @@ document.addEventListener('DOMContentLoaded', () => {
             messagesContainer.appendChild(messageElement);
 
             messageInput.value = '';
+        }
+    });
+
+    leaveChatButton.addEventListener('click', () => {
+        if (socket) {
+            socket.close();
+            socket = null;
+            chatDialog.classList.add('hidden');
+            messagesContainer.innerHTML = '';
         }
     });
 
