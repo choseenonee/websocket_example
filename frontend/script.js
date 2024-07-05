@@ -3,6 +3,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatCardsContainer = document.getElementById('chatCardsContainer');
     const chatDialog = document.getElementById('chatDialog');
     const messagesContainer = document.getElementById('messagesContainer');
+    const prevPageButton = document.getElementById('prevPage');
+    const nextPageButton = document.getElementById('nextPage');
+
+    let currentPage = 1;
+    let currentChatId = null;
 
     const fetchChats = async (name = '') => {
         try {
@@ -18,15 +23,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const fetchMessages = async (chatId) => {
+    const fetchMessages = async (chatId, page = 1) => {
         try {
-            const response = await fetch(`http://0.0.0.0:8080/chat/messages?chat_id=${chatId}&page=1`, {
+            const response = await fetch(`http://0.0.0.0:8080/chat/messages?chat_id=${chatId}&page=${page}`, {
                 headers: {
                     'accept': 'application/json'
                 }
             });
             const data = await response.json();
             populateMessages(data.messages);
+            currentPage = page;
+            currentChatId = chatId;
+            updatePaginationButtons(data.messages.length);
         } catch (error) {
             console.error('Error fetching messages:', error);
         }
@@ -57,6 +65,21 @@ document.addEventListener('DOMContentLoaded', () => {
             messagesContainer.appendChild(messageElement);
         });
     };
+
+    const updatePaginationButtons = (messagesCount) => {
+        prevPageButton.disabled = currentPage === 1;
+        nextPageButton.disabled = messagesCount < 5; // Assuming 10 messages per page
+    };
+
+    prevPageButton.addEventListener('click', () => {
+        if (currentPage > 1) {
+            fetchMessages(currentChatId, currentPage - 1);
+        }
+    });
+
+    nextPageButton.addEventListener('click', () => {
+        fetchMessages(currentChatId, currentPage + 1);
+    });
 
     chatNameInput.addEventListener('input', () => {
         const name = chatNameInput.value;
