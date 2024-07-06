@@ -201,7 +201,9 @@ func TestMessageLatency(t *testing.T) {
 	fmt.Println("Done: ", time.Now())
 }
 
-// TODO: занести фронтенд в статику, перенести доки тоже мб? захостить на серваке Вадима?
+// TODO: FIX TRACING SPANS
+// TODO: FIX CHATS CREATING WITH STUPID NAMES???
+// TODO: захостить на серваке Вадима?
 //TODO: в теле сообщения отправлять таймстамп отправки, тогда получатель знает время отправки и может просто записать всю эту инфу
 // todo: оформить доки
 // todo: рефактор всего
