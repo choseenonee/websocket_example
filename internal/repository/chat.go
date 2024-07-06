@@ -61,7 +61,7 @@ func (c chatRepo) parseChats(rows *sql.Rows) ([]models.Chat, error) {
 }
 
 func (c chatRepo) Create(ctx context.Context, chatCreate models.ChatCreate) (int, error) {
-	tx, err := c.db.Beginx()
+	tx, err := c.db.BeginTx(ctx, nil)
 	if err != nil {
 		return 0, err
 	}
@@ -129,7 +129,7 @@ func (c chatRepo) GetChatsByPage(ctx context.Context, page int) ([]models.Chat, 
 }
 
 func (c chatRepo) CreateMessage(ctx context.Context, messageCreate models.MessageCreate) (int, error) {
-	tx, err := c.db.Beginx()
+	tx, err := c.db.BeginTx(ctx, nil)
 	if err != nil {
 		return 0, err
 	}

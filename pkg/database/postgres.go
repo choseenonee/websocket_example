@@ -28,7 +28,7 @@ func MustGetDB() *sqlx.DB {
 	//}
 
 	db, err := otelsqlx.Open("postgres", connString,
-		otelsql.WithAttributes(semconv.DBSystemSqlite))
+		otelsql.WithAttributes(semconv.DBSystemPostgreSQL))
 	if err != nil {
 		panic(fmt.Sprintf("Error while connecting to DB. Error: %v", err.Error()))
 	}

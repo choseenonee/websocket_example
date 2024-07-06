@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/viper"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"sync/atomic"
 	"time"
 	"websockets/internal/models"
@@ -23,15 +26,17 @@ type ChatRepoScheduler struct {
 	logger       *log.Logs
 	workersCount atomic.Int32
 	promMetrics  prometheus.Gauge
+	tracer       trace.Tracer
 }
 
 func InitChatRepoScheduler(chatRepo repository.ChatRepo, logger *log.Logs,
-	promMetrics prometheus.Gauge) RepoMessageCreator {
+	promMetrics prometheus.Gauge, tracer trace.Tracer) RepoMessageCreator {
 	chatRepoScheduler := ChatRepoScheduler{
 		messages:    make(chan *models.MessageCreate, 100),
 		chatRepo:    chatRepo,
 		logger:      logger,
 		promMetrics: promMetrics,
+		tracer:      tracer,
 	}
 
 	go chatRepoScheduler.run()
@@ -53,12 +58,20 @@ func (c *ChatRepoScheduler) run() {
 		case message := <-c.messages:
 			ctx, cancel := context.WithTimeout(context.Background(),
 				time.Duration(viper.GetInt(config.DBTimeout))*time.Millisecond)
+			ctx, span := c.tracer.Start(ctx, "Create message")
 
 			_, err := c.chatRepo.CreateMessage(ctx, *message)
 			if err != nil {
+				span.RecordError(err, trace.WithAttributes(
+					attribute.String("Error creating message, writing its to file", err.Error())),
+				)
+				span.SetStatus(codes.Error, err.Error())
+
 				c.logger.Error(err.Error())
 				writeMessageToFile(message, c.logger)
 			}
+
+			span.End()
 			cancel()
 
 			if len(c.messages) >= viper.GetInt(config.ChatRepoMessagesNewWorkerOn) && c.workersCount.Load() < 100 {
@@ -80,12 +93,20 @@ func (c *ChatRepoScheduler) newRunWorker() {
 		case message := <-c.messages:
 			ctx, cancel := context.WithTimeout(context.Background(),
 				time.Duration(viper.GetInt(config.DBTimeout))*time.Millisecond)
+			ctx, span := c.tracer.Start(ctx, "Create message")
 
 			_, err := c.chatRepo.CreateMessage(ctx, *message)
 			if err != nil {
+				span.RecordError(err, trace.WithAttributes(
+					attribute.String("Error creating message, writing its to file", err.Error())),
+				)
+				span.SetStatus(codes.Error, err.Error())
+
 				c.logger.Error(err.Error())
 				writeMessageToFile(message, c.logger)
 			}
+
+			span.End()
 			cancel()
 
 			if len(c.messages) < viper.GetInt(config.ChatRepoMessagesNewWorkerOn) {

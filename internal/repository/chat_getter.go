@@ -4,9 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"github.com/spf13/viper"
-	"time"
-	"websockets/pkg/config"
 )
 
 type chatGetterRepo struct {
@@ -19,10 +16,7 @@ func InitChatGetterRepo(chatRepo ChatRepo) ChatGetterRepo {
 	}
 }
 
-func (cg chatGetterRepo) IsChatExists(chatID int) (bool, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(viper.GetInt(config.DBTimeout))*time.Millisecond)
-	defer cancel()
-
+func (cg chatGetterRepo) IsChatExists(ctx context.Context, chatID int) (bool, error) {
 	_, err := cg.chatRepo.GetChatByID(ctx, chatID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

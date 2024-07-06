@@ -76,7 +76,7 @@ func (ch *ChatHandler) CreateChat(c *gin.Context) {
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /chat [get]
 func (ch *ChatHandler) GetChatsByPage(c *gin.Context) {
-	ctx, span := ch.tracer.Start(c.Request.Context(), "Create chat")
+	ctx, span := ch.tracer.Start(c.Request.Context(), "Get chats")
 	defer span.End()
 
 	pageRaw := c.Query("page")
@@ -127,7 +127,7 @@ func (ch *ChatHandler) GetChatsByPage(c *gin.Context) {
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /chat/messages [get]
 func (ch *ChatHandler) GetChatMessagesByPage(c *gin.Context) {
-	ctx, span := ch.tracer.Start(c.Request.Context(), "Create chat")
+	ctx, span := ch.tracer.Start(c.Request.Context(), "Get chat messages")
 	defer span.End()
 
 	chatIDRaw := c.Query("chat_id")

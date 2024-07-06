@@ -28,7 +28,7 @@ type HubHandler struct {
 }
 
 func (h *HubHandler) JoinChat(c *gin.Context) {
-	_, span := h.tracer.Start(c.Request.Context(), "Create chat")
+	ctx, span := h.tracer.Start(c.Request.Context(), "Join chat")
 	defer span.End()
 
 	chatIDRaw := c.Query("id")
@@ -43,7 +43,7 @@ func (h *HubHandler) JoinChat(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
 	}
 
-	err = h.scheduler.JoinChat(chatID, c.Writer, c.Request)
+	err = h.scheduler.JoinChat(ctx, chatID, c.Writer, c.Request)
 	if err != nil {
 		if errors.Is(err, scheduler2.RoomNotFound) {
 			span.RecordError(err, trace.WithAttributes(

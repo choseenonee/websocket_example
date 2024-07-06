@@ -1,6 +1,7 @@
 package scheduler
 
 import (
+	"context"
 	"encoding/json"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -90,12 +91,12 @@ func (h *HubScheduler) listenRoomConnection(chatID int, clientUUID string, conn 
 	}
 }
 
-func (h *HubScheduler) JoinChat(chatID int, w http.ResponseWriter, r *http.Request) error {
+func (h *HubScheduler) JoinChat(ctx context.Context, chatID int, w http.ResponseWriter, r *http.Request) error {
 	h.Lock()
 	defer h.Unlock()
 
 	if (*h.chats)[chatID] == nil {
-		chatExists, err := h.repoChatGetter.IsChatExists(chatID)
+		chatExists, err := h.repoChatGetter.IsChatExists(ctx, chatID)
 		if err != nil {
 			return err
 		}

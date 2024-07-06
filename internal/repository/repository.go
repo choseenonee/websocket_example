@@ -15,5 +15,5 @@ type ChatRepo interface {
 }
 
 type ChatGetterRepo interface {
-	IsChatExists(chatID int) (bool, error)
+	IsChatExists(ctx context.Context, chatID int) (bool, error)
 }
