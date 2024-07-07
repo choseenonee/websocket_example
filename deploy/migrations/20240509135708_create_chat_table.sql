@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS messages (
     sender VARCHAR,
     content VARCHAR,
     send_timestamp timestamp,
-    chat_id INTEGER REFERENCES chats(id)
+    chat_id INTEGER REFERENCES chats(id) ON DELETE CASCADE
 );
 -- +goose StatementEnd
 

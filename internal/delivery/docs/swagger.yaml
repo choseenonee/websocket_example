@@ -2,6 +2,37 @@ info:
   contact: {}
 paths:
   /chat:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Chat name
+        in: query
+        name: chat_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully deleted chat with id
+          schema:
+            type: integer
+        "400":
+          description: Invalid input
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete chat
+      tags:
+      - chat
     get:
       consumes:
       - application/json

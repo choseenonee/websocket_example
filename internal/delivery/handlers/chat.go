@@ -164,3 +164,54 @@ func (ch *ChatHandler) GetChatMessagesByPage(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"messages": messages})
 }
+
+// @Summary Delete chat
+// @Tags chat
+// @Accept  json
+// @Produce  json
+// @Param chat_id query string true "Chat name"
+// @Success 200 {object} int "Successfully deleted chat with id"
+// @Failure 400 {object} map[string]string "Invalid input"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /chat [delete]
+func (ch *ChatHandler) DeleteChat(c *gin.Context) {
+	ctx, span := ch.tracer.Start(c.Request.Context(), "Delete chat")
+	defer span.End()
+
+	chatIdRaw := c.Query("chat_id")
+	chatID, err := strconv.Atoi(chatIdRaw)
+	if err != nil {
+		span.RecordError(err, trace.WithAttributes(
+			attribute.String("Invalid chatID", err.Error())),
+		)
+		span.SetStatus(codes.Error, err.Error())
+
+		c.JSON(http.StatusBadRequest, gin.H{"err": "invalidChatID"})
+		return
+	}
+
+	err = ch.chatRepository.DeleteChat(ctx, chatID)
+	if err != nil {
+		if strings.Contains(err.Error(), "no chat") {
+			span.RecordError(err, trace.WithAttributes(
+				attribute.String("No chat with given id ", err.Error())),
+			)
+			span.SetStatus(codes.Error, err.Error())
+
+			c.JSON(http.StatusBadRequest, gin.H{"err": "chat with given id doesnt exist"})
+			return
+		}
+
+		span.RecordError(err, trace.WithAttributes(
+			attribute.String("Internal server error", err.Error())),
+		)
+		span.SetStatus(codes.Error, err.Error())
+
+		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+		return
+	}
+
+	span.SetStatus(codes.Ok, "Successfully")
+
+	c.JSON(http.StatusOK, "Successfully")
+}

@@ -17,6 +17,7 @@ func RegisterChatRouter(r *gin.Engine, db *sqlx.DB, tracer trace.Tracer) *gin.Ro
 	chatRouter.POST("/", hubHandler.CreateChat)
 	chatRouter.GET("/", hubHandler.GetChatsByPage)
 	chatRouter.GET("/messages", hubHandler.GetChatMessagesByPage)
+	chatRouter.DELETE("/", hubHandler.DeleteChat)
 
 	return chatRouter
 }

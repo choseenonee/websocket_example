@@ -12,6 +12,7 @@ type ChatRepo interface {
 	GetChatsByName(ctx context.Context, name string, page int) ([]models.Chat, error)
 	GetChatsByPage(ctx context.Context, page int) ([]models.Chat, error)
 	CreateMessage(ctx context.Context, message models.MessageCreate) (int, error)
+	DeleteChat(ctx context.Context, chatID int) error
 }
 
 type ChatGetterRepo interface {

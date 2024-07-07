@@ -170,3 +170,29 @@ func (c chatRepo) GetChatByID(ctx context.Context, chatID int) (models.Chat, err
 
 	return chat, nil
 }
+
+func (c chatRepo) DeleteChat(ctx context.Context, chatID int) error {
+	tx, err := c.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	res, err := tx.ExecContext(ctx, `DELETE FROM chats WHERE id = $1`, chatID)
+	if err != nil {
+		if rbErr := tx.Rollback(); rbErr != nil {
+			return fmt.Errorf("err: %v, rbErr: %v", err, rbErr)
+		}
+		return err
+	}
+
+	if rowsAffected, _ := res.RowsAffected(); rowsAffected != 1 {
+		return fmt.Errorf("no chat with given id")
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
