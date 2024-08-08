@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (socket) {
             socket.close();
         }
-        socket = new WebSocket(`ws://0.0.0.0:8080/ws/join_chat?id=${chatId}`);
+        socket = new WebSocket(`ws://0.0.0.0:3002/ws/join_chat?id=${chatId}`);
 
         socket.onopen = () => {
             console.log('WebSocket connection established');
